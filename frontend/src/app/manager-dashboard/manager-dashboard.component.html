@@ -1,0 +1,88 @@
+<section class="rounded-[1.75rem] border border-ink/10 bg-white/85 p-5 shadow-calm">
+  <div class="mb-5 flex items-start justify-between gap-4">
+    <div>
+      <p class="text-xs font-bold uppercase tracking-[0.28em] text-moss">Management Dashboard</p>
+      <h2 class="title-font mt-1 text-3xl font-black">Live HR overview</h2>
+    </div>
+    <button class="small-button" type="button" (click)="refreshManager()">
+      {{ loadingManager ? 'Refreshing...' : 'Refresh' }}
+    </button>
+  </div>
+
+  <p *ngIf="managerError" class="mb-4 rounded-2xl border border-clay/30 bg-clay/10 p-3 text-sm text-clay">{{ managerError }}</p>
+
+  <div class="grid grid-cols-2 gap-3 md:grid-cols-4" *ngIf="dashboard as data">
+    <div class="metric-card">
+      <p class="metric-number">{{ data.summary.activeApplicants }}</p>
+      <p class="metric-label">Active applicants</p>
+    </div>
+    <div class="metric-card">
+      <p class="metric-number">{{ data.summary.activeJobs }}</p>
+      <p class="metric-label">Open jobs</p>
+    </div>
+    <div class="metric-card">
+      <p class="metric-number">{{ data.summary.openShiftSlots }}</p>
+      <p class="metric-label">Shift slots</p>
+    </div>
+    <div class="metric-card">
+      <p class="metric-number">{{ data.summary.pendingApplications }}</p>
+      <p class="metric-label">Pending apps</p>
+    </div>
+  </div>
+
+  <div class="mt-5 grid gap-5 md:grid-cols-2" *ngIf="dashboard as data">
+    <div class="rounded-3xl border border-ink/10 bg-paper/70 p-4">
+      <h3 class="font-black">Department load</h3>
+      <div class="mt-3 space-y-2">
+        <div class="rounded-2xl bg-white p-3 text-sm" *ngFor="let department of data.departments">
+          <div class="flex items-center justify-between gap-3">
+            <p class="font-bold">{{ department.name }}</p>
+            <p class="text-xs text-ink/60">{{ department.openSlots }} slots</p>
+          </div>
+          <p class="text-ink/65">{{ department.activeJobs }} active jobs, {{ department.applications }} applications</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-3xl border border-ink/10 bg-paper/70 p-4">
+      <h3 class="font-black">Availability by day</h3>
+      <div class="mt-3 space-y-2">
+        <div class="flex items-center justify-between gap-3 rounded-2xl bg-white p-3 text-sm" *ngFor="let entry of data.availabilityByDay">
+          <p class="font-bold">{{ entry.dayName }}</p>
+          <p class="text-xs text-ink/60">{{ entry.count }} applicants</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-5 rounded-3xl border border-ink/10 bg-white p-4">
+    <label class="field-label">
+      Candidate matches by job
+      <select class="field-input focus-ring" [value]="selectedJobId" (change)="onJobSelection($event)">
+        <option value="">Select a job</option>
+        <option *ngFor="let job of jobs" [value]="job.id">{{ job.title }} - {{ job.departmentName }}</option>
+      </select>
+    </label>
+
+    <div class="mt-4 rounded-2xl bg-tide/10 p-3 text-sm" *ngIf="selectedJob() as job">
+      <p class="font-black">{{ job.title }}</p>
+      <p class="text-ink/70">{{ job.location }} | ${{ job.hourlyRate.toFixed(2) }}/hr | {{ job.minHoursPerWeek }}-{{ job.maxHoursPerWeek }} hrs/week</p>
+    </div>
+
+    <div class="mt-4 space-y-3">
+      <article class="rounded-2xl border border-ink/10 bg-paper/70 p-3" *ngFor="let candidate of candidateMatches">
+        <div class="flex items-center justify-between gap-3">
+          <p class="font-black">{{ candidate.firstName }} {{ candidate.lastName }}</p>
+          <p class="rounded-full bg-tide px-2 py-1 text-xs font-bold text-white">Score {{ candidate.score }}</p>
+        </div>
+        <p class="text-sm text-ink/65">{{ candidate.major }} | {{ candidate.maxWeeklyHours }} max hrs/week</p>
+        <p class="mt-2 text-sm"><strong>Skills:</strong> {{ candidate.matchedSkills.join(', ') || 'No direct skill match yet' }}</p>
+        <p class="mt-1 text-sm"><strong>Schedule:</strong> {{ candidate.matchedShifts.length ? candidate.matchedShifts[0].label : 'No matching shift yet' }}</p>
+      </article>
+
+      <p class="rounded-2xl border border-dashed border-ink/20 p-4 text-sm text-ink/60" *ngIf="selectedJobId && candidateMatches.length === 0 && !managerError">
+        No candidate matches loaded yet. Refresh after the database is running.
+      </p>
+    </div>
+  </div>
+</section>

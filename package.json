@@ -1,0 +1,57 @@
+{
+  "name": "campus-work-study-hr-portal-lite",
+  "version": "0.1.0",
+  "description": "CPS 3500 Campus Work-Study HR Portal Lite full-stack web application.",
+  "main": "backend/src/server.js",
+  "scripts": {
+    "dev": "node --watch backend/src/server.js",
+    "backend:dev": "node --watch backend/src/server.js",
+    "frontend:dev": "ng serve frontend --proxy-config frontend/proxy.conf.json",
+    "frontend:build": "ng build frontend",
+    "build": "npm run frontend:build",
+    "start": "node backend/src/server.js",
+    "db:schema": "node scripts/run-sql.js database/schema.sql",
+    "db:seed": "node scripts/run-sql.js database/seed.sql",
+    "db:reset": "npm run db:schema && npm run db:seed",
+    "test": "node --test \"tests/**/*.test.js\""
+  },
+  "keywords": [
+    "cps3500",
+    "sesmag",
+    "hrms",
+    "express",
+    "postgresql"
+  ],
+  "author": "Bowen Yang, Teng Xu, Zhiyuan Jiang",
+  "license": "MIT",
+  "dependencies": {
+    "@angular/animations": "^17.3.12",
+    "@angular/common": "^17.3.12",
+    "@angular/compiler": "^17.3.12",
+    "@angular/core": "^17.3.12",
+    "@angular/forms": "^17.3.12",
+    "@angular/platform-browser": "^17.3.12",
+    "@angular/platform-browser-dynamic": "^17.3.12",
+    "@angular/router": "^17.3.12",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pg": "^8.13.1",
+    "rxjs": "^7.8.1",
+    "tslib": "^2.8.1",
+    "zone.js": "^0.14.10"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^17.3.12",
+    "@angular/cli": "^17.3.12",
+    "@angular/compiler-cli": "^17.3.12",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "supertest": "^7.0.0",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.4.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

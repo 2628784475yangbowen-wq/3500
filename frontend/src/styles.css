@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #16211f;
+  background: #f8f3e8;
+  font-family: "Trebuchet MS", "Aptos", sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(234, 217, 174, 0.8), transparent 34rem),
+    linear-gradient(135deg, #f8f3e8 0%, #eef3e5 58%, #f6e7d4 100%);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.focus-ring {
+  @apply focus:outline-none focus:ring-4 focus:ring-tide/20 focus:border-tide;
+}

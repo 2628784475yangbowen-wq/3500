@@ -1,0 +1,109 @@
+<section class="grid gap-5 xl:grid-cols-[1.35fr_1fr]">
+  <section class="rounded-[1.75rem] border border-ink/10 bg-white/85 p-5 shadow-calm">
+    <div class="mb-5 flex items-start justify-between gap-4">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-[0.28em] text-moss">Applicant DAV Portal</p>
+        <h2 class="title-font mt-1 text-3xl font-black">Safe profile editing</h2>
+      </div>
+      <span class="rounded-full bg-wheat/70 px-3 py-1 text-xs font-bold text-ink">Low stress mode</span>
+    </div>
+
+    <p *ngIf="loadError" class="mb-4 rounded-2xl border border-clay/30 bg-clay/10 p-3 text-sm text-clay">{{ loadError }}</p>
+
+    <form class="space-y-4" (ngSubmit)="saveAll()">
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="field-label">
+          First name
+          <input class="field-input focus-ring" name="firstName" [(ngModel)]="profile.firstName">
+        </label>
+        <label class="field-label">
+          Last name
+          <input class="field-input focus-ring" name="lastName" [(ngModel)]="profile.lastName">
+        </label>
+      </div>
+
+      <label class="field-label">
+        Email
+        <input class="field-input focus-ring" name="email" type="email" [(ngModel)]="profile.email">
+      </label>
+
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="field-label">
+          Phone
+          <input class="field-input focus-ring" name="phone" [(ngModel)]="profile.phone">
+        </label>
+        <label class="field-label">
+          Preferred contact
+          <select class="field-input focus-ring" name="preferredContact" [(ngModel)]="profile.preferredContact">
+            <option value="email">Email</option>
+            <option value="phone">Phone</option>
+            <option value="text">Text</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="field-label">
+          Major
+          <input class="field-input focus-ring" name="major" [(ngModel)]="profile.major">
+        </label>
+        <label class="field-label">
+          Max weekly hours
+          <input class="field-input focus-ring" name="maxWeeklyHours" type="number" min="1" max="25" [(ngModel)]="profile.maxWeeklyHours">
+        </label>
+      </div>
+
+      <label class="field-label">
+        Public summary
+        <textarea class="field-input min-h-24 focus-ring" name="publicSummary" [(ngModel)]="profile.publicSummary"></textarea>
+      </label>
+
+      <label class="field-label">
+        Access needs or preferences
+        <textarea class="field-input min-h-20 focus-ring" name="accessNeeds" [(ngModel)]="profile.accessNeeds"></textarea>
+      </label>
+
+      <label class="field-label">
+        Skills, separated by commas
+        <input class="field-input focus-ring" name="skillsText" [(ngModel)]="skillsText">
+      </label>
+
+      <div class="rounded-3xl border border-ink/10 bg-paper/70 p-4">
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h3 class="font-black">Availability</h3>
+            <p class="text-sm text-ink/65">Text-based rows keep this usable on older devices.</p>
+          </div>
+          <button type="button" class="small-button" (click)="addAvailability()">Add row</button>
+        </div>
+
+        <div class="space-y-3">
+          <div
+            class="grid gap-2 rounded-2xl border border-ink/10 bg-white p-3 sm:grid-cols-[1fr_0.8fr_0.8fr_1fr_auto]"
+            *ngFor="let block of availability; let i = index"
+          >
+            <select class="field-input focus-ring" name="day{{ i }}" [(ngModel)]="block.dayOfWeek">
+              <option *ngFor="let day of days" [ngValue]="day.value">{{ day.label }}</option>
+            </select>
+            <input class="field-input focus-ring" name="start{{ i }}" type="time" [(ngModel)]="block.startTime">
+            <input class="field-input focus-ring" name="end{{ i }}" type="time" [(ngModel)]="block.endTime">
+            <input class="field-input focus-ring" name="note{{ i }}" placeholder="Optional note" [(ngModel)]="block.note">
+            <button type="button" class="danger-button" (click)="removeAvailability(i)">Remove</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sticky bottom-3 z-10 rounded-3xl border border-ink/10 bg-white/95 p-3 shadow-calm">
+        <p class="mb-3 text-sm font-bold text-ink/75">{{ saveStatus }}</p>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <button class="primary-button" type="submit" [disabled]="savingApplicant || loadingApplicant">
+            {{ savingApplicant ? 'Saving...' : 'Save safely' }}
+          </button>
+          <button class="secondary-button" type="button" (click)="undoDraft()">Undo draft changes</button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <app-ai-chat [applicantId]="applicantId"></app-ai-chat>
+</section>

@@ -1,0 +1,33 @@
+<section class="rounded-[1.75rem] border border-ink/10 bg-ink p-5 text-paper shadow-calm">
+  <p class="text-xs font-bold uppercase tracking-[0.28em] text-wheat">AI Matchmaking Assistant</p>
+  <h2 class="title-font mt-1 text-3xl font-black">Ask in plain language</h2>
+  <p class="mt-2 text-sm leading-6 text-paper/75">
+    The backend extracts days, time windows, and skills, then queries PostgreSQL. The model never writes SQL.
+  </p>
+
+  <div class="mt-5 max-h-[34rem] space-y-3 overflow-y-auto pr-1">
+    <article
+      class="rounded-3xl p-4 text-sm leading-6"
+      [ngClass]="message.role === 'user' ? 'ml-8 bg-tide text-white' : 'mr-8 bg-paper/10 text-paper'"
+      *ngFor="let message of chatMessages"
+    >
+      <p class="mb-1 text-xs font-bold uppercase tracking-[0.18em] opacity-70">{{ message.role }}</p>
+      <p class="whitespace-pre-line">{{ message.text }}</p>
+    </article>
+  </div>
+
+  <form class="mt-5 space-y-3" (ngSubmit)="sendChat()">
+    <label class="block text-sm font-bold text-paper/80" for="chatInput">Message</label>
+    <textarea
+      id="chatInput"
+      name="chatInput"
+      class="min-h-28 w-full rounded-3xl border border-paper/20 bg-paper/10 p-4 text-paper placeholder:text-paper/50 focus:outline-none focus:ring-4 focus:ring-wheat/20"
+      [(ngModel)]="chatInput"
+      placeholder="Example: I am free Tuesday morning and I can troubleshoot printers."
+    ></textarea>
+    <p *ngIf="chatError" class="rounded-2xl border border-clay/40 bg-clay/20 p-3 text-sm text-paper">{{ chatError }}</p>
+    <button class="chat-button" type="submit" [disabled]="sendingChat">
+      {{ sendingChat ? 'Matching...' : 'Find jobs' }}
+    </button>
+  </form>
+</section>
