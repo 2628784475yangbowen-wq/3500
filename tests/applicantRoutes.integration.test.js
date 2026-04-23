@@ -90,3 +90,44 @@ test('PATCH /api/applicants/:id/profile forwards update payload', async (t) => {
   assert.equal(captured.body.firstName, 'Sam');
   assert.equal(response.body.applicant.max_weekly_hours, 8);
 });
+
+test('GET /api/applicants/:id/applications returns application list', async (t) => {
+  process.env.API_TOKEN = '';
+  const original = applicantService.listApplicationsByApplicant;
+
+  applicantService.listApplicationsByApplicant = async (id) => [
+    { id: 'a1', jobId: 'b1', status: 'submitted', applicantNote: 'Interested' }
+  ];
+
+  t.after(() => {
+    applicantService.listApplicationsByApplicant = original;
+  });
+
+  const response = await request(app).get('/api/applicants/30000000-0000-0000-0000-000000000001/applications');
+  assert.equal(response.status, 200);
+  assert.equal(response.body.applications[0].status, 'submitted');
+});
+
+test('POST /api/applicants/:id/applications creates application', async (t) => {
+  process.env.API_TOKEN = '';
+  const original = applicantService.applyToJob;
+
+  applicantService.applyToJob = async (id, body) => ({
+    id: 'new-app',
+    jobId: body.jobId,
+    status: 'submitted',
+    applicantNote: String(body.note || '')
+  });
+
+  t.after(() => {
+    applicantService.applyToJob = original;
+  });
+
+  const jobId = '20000000-0000-0000-0000-000000000001';
+  const response = await request(app)
+    .post('/api/applicants/30000000-0000-0000-0000-000000000001/applications')
+    .send({ jobId, applicantNote: 'Please consider me' });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.application.status, 'submitted');
+});

@@ -1,109 +1,208 @@
 <section class="grid gap-5 xl:grid-cols-[1.35fr_1fr]">
-  <section class="rounded-[1.75rem] border border-ink/10 bg-white/85 p-5 shadow-calm">
-    <div class="mb-5 flex items-start justify-between gap-4">
-      <div>
-        <p class="text-xs font-bold uppercase tracking-[0.28em] text-moss">Applicant DAV Portal</p>
-        <h2 class="title-font mt-1 text-3xl font-black">Safe profile editing</h2>
-      </div>
-      <span class="rounded-full bg-wheat/70 px-3 py-1 text-xs font-bold text-ink">Low stress mode</span>
-    </div>
-
-    <p *ngIf="loadError" class="mb-4 rounded-2xl border border-clay/30 bg-clay/10 p-3 text-sm text-clay">{{ loadError }}</p>
-
-    <form class="space-y-4" (ngSubmit)="saveAll()">
-      <div class="grid gap-3 sm:grid-cols-2">
-        <label class="field-label">
-          First name
-          <input class="field-input focus-ring" name="firstName" [(ngModel)]="profile.firstName">
-        </label>
-        <label class="field-label">
-          Last name
-          <input class="field-input focus-ring" name="lastName" [(ngModel)]="profile.lastName">
-        </label>
-      </div>
-
-      <label class="field-label">
-        Email
-        <input class="field-input focus-ring" name="email" type="email" [(ngModel)]="profile.email">
-      </label>
-
-      <div class="grid gap-3 sm:grid-cols-2">
-        <label class="field-label">
-          Phone
-          <input class="field-input focus-ring" name="phone" [(ngModel)]="profile.phone">
-        </label>
-        <label class="field-label">
-          Preferred contact
-          <select class="field-input focus-ring" name="preferredContact" [(ngModel)]="profile.preferredContact">
-            <option value="email">Email</option>
-            <option value="phone">Phone</option>
-            <option value="text">Text</option>
-          </select>
-        </label>
-      </div>
-
-      <div class="grid gap-3 sm:grid-cols-2">
-        <label class="field-label">
-          Major
-          <input class="field-input focus-ring" name="major" [(ngModel)]="profile.major">
-        </label>
-        <label class="field-label">
-          Max weekly hours
-          <input class="field-input focus-ring" name="maxWeeklyHours" type="number" min="1" max="25" [(ngModel)]="profile.maxWeeklyHours">
-        </label>
-      </div>
-
-      <label class="field-label">
-        Public summary
-        <textarea class="field-input min-h-24 focus-ring" name="publicSummary" [(ngModel)]="profile.publicSummary"></textarea>
-      </label>
-
-      <label class="field-label">
-        Access needs or preferences
-        <textarea class="field-input min-h-20 focus-ring" name="accessNeeds" [(ngModel)]="profile.accessNeeds"></textarea>
-      </label>
-
-      <label class="field-label">
-        Skills, separated by commas
-        <input class="field-input focus-ring" name="skillsText" [(ngModel)]="skillsText">
-      </label>
-
-      <div class="rounded-3xl border border-ink/10 bg-paper/70 p-4">
-        <div class="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <h3 class="font-black">Availability</h3>
-            <p class="text-sm text-ink/65">Text-based rows keep this usable on older devices.</p>
-          </div>
-          <button type="button" class="small-button" (click)="addAvailability()">Add row</button>
+  <div class="flex flex-col gap-5">
+    <section class="rounded-[1.75rem] border border-ink/10 bg-white/85 p-5 shadow-calm">
+      <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[0.28em] text-moss">Applicant DAV Portal</p>
+          <h2 class="title-font mt-1 text-3xl font-black">Safe profile editing</h2>
         </div>
-
-        <div class="space-y-3">
-          <div
-            class="grid gap-2 rounded-2xl border border-ink/10 bg-white p-3 sm:grid-cols-[1fr_0.8fr_0.8fr_1fr_auto]"
-            *ngFor="let block of availability; let i = index"
-          >
-            <select class="field-input focus-ring" name="day{{ i }}" [(ngModel)]="block.dayOfWeek">
-              <option *ngFor="let day of days" [ngValue]="day.value">{{ day.label }}</option>
-            </select>
-            <input class="field-input focus-ring" name="start{{ i }}" type="time" [(ngModel)]="block.startTime">
-            <input class="field-input focus-ring" name="end{{ i }}" type="time" [(ngModel)]="block.endTime">
-            <input class="field-input focus-ring" name="note{{ i }}" placeholder="Optional note" [(ngModel)]="block.note">
-            <button type="button" class="danger-button" (click)="removeAvailability(i)">Remove</button>
-          </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded-full bg-wheat/70 px-3 py-1.5 text-xs font-bold text-ink">Low stress mode</span>
+          <a class="outline-button" routerLink="/manager">Manager dashboard</a>
         </div>
       </div>
 
-      <div class="sticky bottom-3 z-10 rounded-3xl border border-ink/10 bg-white/95 p-3 shadow-calm">
-        <p class="mb-3 text-sm font-bold text-ink/75">{{ saveStatus }}</p>
+      <p *ngIf="loadError" class="mb-4 rounded-2xl border border-clay/30 bg-clay/10 p-3 text-sm text-clay">{{ loadError }}</p>
+      <p *ngIf="jobLoadError" class="mb-4 rounded-2xl border border-clay/30 bg-clay/10 p-3 text-sm text-clay">{{ jobLoadError }}</p>
+
+      <form [formGroup]="portalForm" class="space-y-4" (ngSubmit)="saveAll()">
         <div class="grid gap-3 sm:grid-cols-2">
-          <button class="primary-button" type="submit" [disabled]="savingApplicant || loadingApplicant">
-            {{ savingApplicant ? 'Saving...' : 'Save safely' }}
-          </button>
-          <button class="secondary-button" type="button" (click)="undoDraft()">Undo draft changes</button>
+          <label class="field-label">
+            First name
+            <input class="field-input focus-ring" formControlName="firstName" autocomplete="given-name" />
+          </label>
+          <label class="field-label">
+            Last name
+            <input class="field-input focus-ring" formControlName="lastName" autocomplete="family-name" />
+          </label>
         </div>
-      </div>
-    </form>
-  </section>
+
+        <label class="field-label">
+          Email
+          <input class="field-input focus-ring" formControlName="email" type="email" autocomplete="email" />
+        </label>
+
+        <div class="grid gap-3 sm:grid-cols-2">
+          <label class="field-label">
+            Phone
+            <input class="field-input focus-ring" formControlName="phone" autocomplete="tel" />
+          </label>
+          <label class="field-label">
+            Preferred contact
+            <select class="field-input focus-ring" formControlName="preferredContact">
+              <option value="email">Email</option>
+              <option value="phone">Phone</option>
+              <option value="text">Text</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-2">
+          <label class="field-label">
+            Major
+            <input class="field-input focus-ring" formControlName="major" />
+          </label>
+          <label class="field-label">
+            Year
+            <select class="field-input focus-ring" formControlName="yearLevel">
+              <option value="undergraduate">Undergraduate</option>
+              <option value="junior">Junior</option>
+              <option value="senior">Senior</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="max-w-sm">
+          <label class="field-label">
+            Max weekly hours
+            <input class="field-input focus-ring" formControlName="maxWeeklyHours" type="number" min="1" max="25" />
+          </label>
+        </div>
+
+        <div class="rounded-3xl border border-ink/10 bg-paper/60 p-4 sm:p-5">
+          <div class="mb-4 border-b border-ink/10 pb-3">
+            <h3 class="text-lg font-black leading-tight text-ink">Narrative and skills</h3>
+            <p class="mt-1 text-sm leading-relaxed text-ink/65">
+              Help hiring staff understand you. Use short paragraphs. List skills in one line or one per line.
+            </p>
+          </div>
+          <div class="space-y-6">
+            <div>
+              <label class="field-label" for="publicSummary">Public summary</label>
+              <p class="mb-1.5 text-xs font-semibold text-ink/55">Visible to staff when reviewing your fit.</p>
+              <textarea
+                id="publicSummary"
+                class="field-input min-h-28 w-full resize-y text-sm leading-relaxed focus-ring"
+                formControlName="publicSummary"
+                rows="4"
+                spellcheck="true"
+              ></textarea>
+            </div>
+            <div>
+              <label class="field-label" for="accessNeeds">Access needs or preferences</label>
+              <p class="mb-1.5 text-xs font-semibold text-ink/55">Optional. Helps us keep forms and pages easier for you.</p>
+              <textarea
+                id="accessNeeds"
+                class="field-input min-h-24 w-full resize-y text-sm leading-relaxed focus-ring"
+                formControlName="accessNeeds"
+                rows="3"
+                spellcheck="true"
+              ></textarea>
+            </div>
+            <div>
+              <label class="field-label" for="skillsText">Skills</label>
+              <p class="mb-1.5 text-xs font-semibold text-ink/55">Separate with commas, or one skill per line.</p>
+              <textarea
+                id="skillsText"
+                class="field-input min-h-20 w-full resize-y font-mono text-sm leading-normal focus-ring"
+                formControlName="skillsText"
+                rows="3"
+                placeholder="customer service, data entry, basic troubleshooting"
+                spellcheck="true"
+                autocapitalize="off"
+                autocomplete="off"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-3xl border border-ink/10 bg-paper/70 p-4">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <h3 class="font-black">Open jobs on campus</h3>
+              <p class="text-sm text-ink/65">One-tap apply. Status updates for your records only.</p>
+            </div>
+          </div>
+          <p *ngIf="jobs.length === 0" class="text-sm text-ink/60">No open jobs loaded from the server yet.</p>
+          <ul class="space-y-2">
+            <li
+              *ngFor="let job of jobs"
+              class="flex flex-col gap-2 rounded-2xl border border-ink/10 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div>
+                <p class="font-bold">{{ job.title }}</p>
+                <p class="text-sm text-ink/65">
+                  {{ job.departmentName }} · from ${{ job.hourlyRate }}/h ·
+                  <span *ngIf="job.lowBandwidthFriendly">low-bandwidth friendly</span>
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span *ngIf="applicationByJob[job.id]" class="text-xs font-bold text-ink/70">
+                  {{ statusLabel(applicationByJob[job.id]) }}
+                </span>
+                <button
+                  *ngIf="canApply(applicationByJob[job.id])"
+                  type="button"
+                  class="primary-button"
+                  [disabled]="applyingJobId === job.id"
+                  (click)="submitApplication(job)"
+                >
+                  {{ applyingJobId === job.id ? 'Submitting' : 'Apply' }}
+                </button>
+                <span *ngIf="applicationByJob[job.id] && !canApply(applicationByJob[job.id])" class="text-sm text-ink/60"
+                  >Tracking</span
+                >
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="rounded-3xl border border-ink/10 bg-paper/70 p-4">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <h3 class="font-black">Availability</h3>
+              <p class="text-sm text-ink/65">Drag rows to reorder. Text-based fields work on low-end devices.</p>
+            </div>
+            <button type="button" class="small-button" (click)="addAvailability()">Add row</button>
+          </div>
+
+          <div
+            class="space-y-3"
+            formArrayName="availability"
+            cdkDropList
+            [cdkDropListData]="availabilityArray.controls"
+            (cdkDropListDropped)="onAvailabilityDrop($event)"
+          >
+            <div
+              *ngFor="let _ctrl of availabilityArray.controls; let i = index"
+              cdkDrag
+              class="grid gap-2 rounded-2xl border border-ink/10 bg-white p-3 sm:grid-cols-[auto_1fr_0.8fr_0.8fr_1fr_auto] sm:items-center"
+              [formGroupName]="i"
+            >
+              <div cdkDragHandle class="select-none text-ink/40" title="Drag to reorder">::</div>
+              <select class="field-input focus-ring" formControlName="dayOfWeek">
+                <option *ngFor="let day of days" [ngValue]="day.value">{{ day.label }}</option>
+              </select>
+              <input class="field-input focus-ring" formControlName="startTime" type="time" />
+              <input class="field-input focus-ring" formControlName="endTime" type="time" />
+              <input class="field-input focus-ring" formControlName="note" placeholder="Optional note" />
+              <button type="button" class="danger-button" (click)="removeAvailability(i)">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sticky bottom-3 z-10 rounded-3xl border border-ink/10 bg-white/95 p-3 shadow-calm">
+          <p class="mb-3 text-sm font-bold text-ink/75">{{ saveStatus }}</p>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <button class="primary-button" type="submit" [disabled]="savingApplicant || loadingApplicant">
+              {{ savingApplicant ? 'Saving...' : 'Save safely' }}
+            </button>
+            <button class="secondary-button" type="button" (click)="undoDraft()">Undo draft changes</button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </div>
 
   <app-ai-chat [applicantId]="applicantId"></app-ai-chat>
 </section>

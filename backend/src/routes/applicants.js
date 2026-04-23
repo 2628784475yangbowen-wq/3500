@@ -45,4 +45,26 @@ router.put(
   })
 );
 
+router.get(
+  '/:id/applications',
+  asyncHandler(async (req, res) => {
+    const applications = await applicantService.listApplicationsByApplicant(req.params.id);
+    res.json({ applications });
+  })
+);
+
+router.post(
+  '/:id/applications',
+  asyncHandler(async (req, res) => {
+    const application = await applicantService.applyToJob(req.params.id, {
+      jobId: req.body.jobId,
+      note: req.body.applicantNote
+    });
+    res.json({
+      message: 'Application submitted',
+      application
+    });
+  })
+);
+
 module.exports = router;

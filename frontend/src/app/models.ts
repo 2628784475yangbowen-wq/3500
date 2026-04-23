@@ -95,6 +95,13 @@ export interface ChatResponse {
   };
 }
 
+export interface JobApplication {
+  id: string;
+  jobId: string;
+  status: string;
+  applicantNote?: string;
+}
+
 export interface CandidateMatch {
   id: string;
   firstName: string;

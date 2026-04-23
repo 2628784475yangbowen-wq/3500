@@ -21,6 +21,7 @@ test('parseSkills trims, lowercases, and drops empty tokens', () => {
     parseSkills(' Customer Service , DATA entry, ,tutoring'),
     ['customer service', 'data entry', 'tutoring']
   );
+  assert.deepEqual(parseSkills('one\ntwo\nthree'), ['one', 'two', 'three']);
   assert.deepEqual(parseSkills(''), []);
   assert.deepEqual(parseSkills(undefined), []);
 });

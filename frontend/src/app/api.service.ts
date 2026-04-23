@@ -8,7 +8,8 @@ import {
   CandidateMatch,
   ChatResponse,
   Dashboard,
-  Job
+  Job,
+  JobApplication
 } from './models';
 
 @Injectable({ providedIn: 'root' })
@@ -30,6 +31,17 @@ export class ApiService {
 
   replaceAvailability(id: string, availability: AvailabilityBlock[]): Observable<{ applicant: Applicant; message: string }> {
     return this.http.put<{ applicant: Applicant; message: string }>(`${this.baseUrl}/applicants/${id}/availability`, { availability });
+  }
+
+  getMyApplications(id: string): Observable<{ applications: JobApplication[] }> {
+    return this.http.get<{ applications: JobApplication[] }>(`${this.baseUrl}/applicants/${id}/applications`);
+  }
+
+  applyToJob(id: string, jobId: string, applicantNote?: string): Observable<{ application: JobApplication; message: string }> {
+    return this.http.post<{ application: JobApplication; message: string }>(`${this.baseUrl}/applicants/${id}/applications`, {
+      jobId,
+      applicantNote: applicantNote ?? ''
+    });
   }
 
   getDashboard(): Observable<{ dashboard: Dashboard }> {

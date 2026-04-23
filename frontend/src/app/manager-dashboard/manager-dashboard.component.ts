@@ -1,19 +1,27 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { forkJoin, interval, merge, of, Subject, Subscription, takeUntil } from 'rxjs';
+import { debounceTime, filter } from 'rxjs/operators';
 import { ApiService } from '../api.service';
 import { friendlyError } from '../logic';
 import { CandidateMatch, Dashboard, Job } from '../models';
 
+const MANAGER_POLL_MS = 20_000;
+
 @Component({
   selector: 'app-manager-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './manager-dashboard.component.html'
 })
-export class ManagerDashboardComponent implements OnInit {
+export class ManagerDashboardComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
+  private readonly destroy$ = new Subject<void>();
+  private pollSub?: Subscription;
+  private entrySub?: Subscription;
 
   dashboard: Dashboard | null = null;
   jobs: Job[] = [];
@@ -21,13 +29,47 @@ export class ManagerDashboardComponent implements OnInit {
   candidateMatches: CandidateMatch[] = [];
   managerError = '';
   loadingManager = false;
+  loadingMatches = false;
+  showManagerGuide = false;
 
   ngOnInit(): void {
-    this.refreshManager();
+    this.entrySub = merge(
+      of(null),
+      this.router.events.pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        filter((event) => this.isManagerRoute(event.urlAfterRedirects))
+      )
+    )
+      .pipe(takeUntil(this.destroy$), debounceTime(40))
+      .subscribe(() => {
+        this.selectedJobId = '';
+        this.candidateMatches = [];
+        this.refreshManager();
+      });
+
+    this.pollSub = interval(MANAGER_POLL_MS)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.refreshManager(true);
+      });
   }
 
-  refreshManager(): void {
-    this.loadingManager = true;
+  private isManagerRoute(url: string): boolean {
+    const path = url.split('?')[0];
+    return path === '/manager' || path.endsWith('/manager');
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.entrySub?.unsubscribe();
+    this.pollSub?.unsubscribe();
+  }
+
+  refreshManager(silent = false): void {
+    if (!silent) {
+      this.loadingManager = true;
+    }
     this.managerError = '';
 
     forkJoin({
@@ -48,7 +90,10 @@ export class ManagerDashboardComponent implements OnInit {
         }
       },
       error: (error: unknown) => {
-        this.managerError = friendlyError(error, 'Could not load manager dashboard. Is the backend and database running?');
+        this.managerError = friendlyError(
+          error,
+          'Could not load manager dashboard. Is the backend and database running?'
+        );
         this.loadingManager = false;
       }
     });
@@ -62,14 +107,27 @@ export class ManagerDashboardComponent implements OnInit {
       return;
     }
 
+    this.loadingMatches = true;
     this.api.getCandidateMatches(jobId).subscribe({
       next: ({ candidates }) => {
         this.candidateMatches = candidates;
+        this.loadingMatches = false;
       },
       error: (error: unknown) => {
         this.managerError = friendlyError(error, 'Could not load candidate matches.');
+        this.loadingMatches = false;
       }
     });
+  }
+
+  toggleManagerGuide(): void {
+    this.showManagerGuide = !this.showManagerGuide;
+  }
+
+  reloadMatchesOnly(): void {
+    if (this.selectedJobId) {
+      this.loadCandidateMatches(this.selectedJobId);
+    }
   }
 
   onJobSelection(event: Event): void {

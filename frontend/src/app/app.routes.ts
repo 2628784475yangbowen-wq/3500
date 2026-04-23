@@ -1,17 +1,15 @@
 import { Routes } from '@angular/router';
-import { ApplicantPortalComponent } from './applicant-portal/applicant-portal.component';
-import { ManagerDashboardComponent } from './manager-dashboard/manager-dashboard.component';
 
 export const appRoutes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'applicant' },
   {
     path: 'applicant',
-    component: ApplicantPortalComponent,
+    loadComponent: () => import('./applicant-portal/applicant-portal.component').then((m) => m.ApplicantPortalComponent),
     title: 'Applicant DAV Portal'
   },
   {
     path: 'manager',
-    component: ManagerDashboardComponent,
+    loadComponent: () => import('./manager-dashboard/manager-dashboard.component').then((m) => m.ManagerDashboardComponent),
     title: 'Management Dashboard'
   },
   { path: '**', redirectTo: 'applicant' }

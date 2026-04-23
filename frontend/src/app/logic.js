@@ -18,7 +18,7 @@ function dayLabel(dayOfWeek) {
 
 function parseSkills(skillsText) {
   return String(skillsText || '')
-    .split(',')
+    .split(/[,\n]+/)
     .map((skill) => skill.trim().toLowerCase())
     .filter(Boolean);
 }

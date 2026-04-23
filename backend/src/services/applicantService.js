@@ -192,6 +192,61 @@ async function replaceAvailability(applicantId, availability) {
   });
 }
 
+async function listApplicationsByApplicant(applicantId, executor = db) {
+  const result = await executor.query(
+    `
+      SELECT
+        a.id,
+        a.job_id AS "jobId",
+        a.status,
+        a.applicant_note AS "applicantNote"
+      FROM applications a
+      WHERE a.applicant_id = $1
+      ORDER BY a.updated_at DESC
+    `,
+    [applicantId]
+  );
+  return result.rows;
+}
+
+async function applyToJob(applicantId, { jobId, note }) {
+  if (!jobId) {
+    throw badRequest('jobId is required');
+  }
+
+  return db.withTransaction(async (client) => {
+    await getApplicantById(applicantId, client);
+    const job = await client.query('SELECT id FROM jobs WHERE id = $1 AND active = TRUE', [jobId]);
+    if (job.rowCount === 0) {
+      throw notFound('Job is not open or not found');
+    }
+
+    const applicantNote = String(note ?? '').trim();
+    const result = await client.query(
+      `
+        INSERT INTO applications (applicant_id, job_id, status, applicant_note)
+        VALUES ($1, $2, 'submitted', $3)
+        ON CONFLICT (applicant_id, job_id)
+        DO UPDATE SET
+          status = CASE
+            WHEN applications.status IN ('declined', 'draft') THEN 'submitted'
+            ELSE applications.status
+          END,
+          applicant_note = EXCLUDED.applicant_note,
+          updated_at = NOW()
+        RETURNING
+          id,
+          job_id AS "jobId",
+          status,
+          applicant_note AS "applicantNote"
+      `,
+      [applicantId, jobId, applicantNote]
+    );
+
+    return result.rows[0];
+  });
+}
+
 async function writeAuditEvent(client, event) {
   await client.query(
     `
@@ -222,5 +277,7 @@ module.exports = {
   getApplicantById,
   updateProfile,
   replaceSkills,
-  replaceAvailability
+  replaceAvailability,
+  listApplicationsByApplicant,
+  applyToJob
 };
