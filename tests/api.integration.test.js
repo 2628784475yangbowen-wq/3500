@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const { after, test } = require('node:test');
+const { APPLICANT_ID, applicantAuth, managerAuth } = require('./helpers/auth');
 const request = require('supertest');
 const app = require('../backend/src/app');
 const { pool } = require('../backend/src/config/db');
@@ -13,8 +14,6 @@ after(async () => {
 });
 
 test('GET /api/health returns service status without authentication', async () => {
-  process.env.API_TOKEN = 'secret-for-test';
-
   const response = await request(app).get('/api/health');
 
   assert.equal(response.status, 200);
@@ -22,17 +21,14 @@ test('GET /api/health returns service status without authentication', async () =
   assert.equal(response.body.service, 'campus-work-study-hr-portal-lite');
 });
 
-test('protected API routes reject requests without a configured token', async () => {
-  process.env.API_TOKEN = 'secret-for-test';
-
+test('protected API routes reject requests without a JWT', async () => {
   const response = await request(app).get('/api/jobs');
 
   assert.equal(response.status, 401);
-  assert.match(response.body.error.message, /Unauthorized/);
+  assert.match(response.body.error.message, /Authentication required/);
 });
 
 test('PUT /api/applicants/:id/availability accepts applicant schedule updates', async (t) => {
-  process.env.API_TOKEN = '';
   const original = applicantService.replaceAvailability;
 
   applicantService.replaceAvailability = async (applicantId, availability) => ({
@@ -49,7 +45,8 @@ test('PUT /api/applicants/:id/availability accepts applicant schedule updates', 
   });
 
   const response = await request(app)
-    .put('/api/applicants/30000000-0000-0000-0000-000000000001/availability')
+    .put(`/api/applicants/${APPLICANT_ID}/availability`)
+    .set(applicantAuth(APPLICANT_ID))
     .send({
       availability: [
         { dayOfWeek: 2, startTime: '08:00', endTime: '12:00', note: 'Morning block' }
@@ -62,7 +59,6 @@ test('PUT /api/applicants/:id/availability accepts applicant schedule updates', 
 });
 
 test('GET /api/managers/dashboard returns aggregated manager data', async (t) => {
-  process.env.API_TOKEN = '';
   const original = managerService.getDashboardSummary;
 
   managerService.getDashboardSummary = async () => ({
@@ -81,15 +77,25 @@ test('GET /api/managers/dashboard returns aggregated manager data', async (t) =>
     managerService.getDashboardSummary = original;
   });
 
-  const response = await request(app).get('/api/managers/dashboard');
+  const response = await request(app)
+    .get('/api/managers/dashboard')
+    .set(managerAuth());
 
   assert.equal(response.status, 200);
   assert.equal(response.body.dashboard.summary.activeApplicants, 3);
   assert.equal(response.body.dashboard.departments[0].name, 'IT Help Desk');
 });
 
+test('applicant cannot reach manager-only routes', async () => {
+  const response = await request(app)
+    .get('/api/managers/dashboard')
+    .set(applicantAuth(APPLICANT_ID));
+
+  assert.equal(response.status, 403);
+  assert.match(response.body.error.message, /Access denied/i);
+});
+
 test('POST /api/ai/chat returns database-backed recommendations through service stubs', async (t) => {
-  process.env.API_TOKEN = '';
   const originalExtract = aiService.extractMatchCriteria;
   const originalRecommend = jobService.recommendJobs;
 
@@ -102,7 +108,7 @@ test('POST /api/ai/chat returns database-backed recommendations through service 
   });
   jobService.recommendJobs = async () => ({
     applicant: {
-      id: '30000000-0000-0000-0000-000000000001',
+      id: APPLICANT_ID,
       first_name: 'Alex',
       last_name: 'Morgan'
     },
@@ -128,12 +134,48 @@ test('POST /api/ai/chat returns database-backed recommendations through service 
 
   const response = await request(app)
     .post('/api/ai/chat')
+    .set(applicantAuth(APPLICANT_ID))
     .send({
       message: 'I am free Tuesday morning. What jobs can I do?',
-      applicantId: '30000000-0000-0000-0000-000000000001'
+      applicantId: APPLICANT_ID
     });
 
   assert.equal(response.status, 200);
   assert.match(response.body.reply, /IT Help Desk Aide/);
   assert.equal(response.body.recommendations[0].score, 85);
+});
+
+test('POST /api/auth/login returns a token on valid credentials', async (t) => {
+  const authService = require('../backend/src/services/authService');
+  const originalLogin = authService.login;
+
+  authService.login = async ({ email, password }) => {
+    if (email === 'alex.morgan@student.example' && password === 'password123') {
+      return {
+        token: authService.signToken({ id: APPLICANT_ID, role: 'applicant', email }),
+        user: { id: APPLICANT_ID, role: 'applicant', email, firstName: 'Alex', lastName: 'Morgan' }
+      };
+    }
+    const { AppError } = require('../backend/src/utils/errors');
+    throw new AppError(401, 'Invalid email or password');
+  };
+
+  t.after(() => {
+    authService.login = originalLogin;
+  });
+
+  const good = await request(app)
+    .post('/api/auth/login')
+    .send({ email: 'alex.morgan@student.example', password: 'password123' });
+
+  assert.equal(good.status, 200);
+  assert.ok(good.body.token);
+  assert.equal(good.body.user.role, 'applicant');
+
+  const bad = await request(app)
+    .post('/api/auth/login')
+    .send({ email: 'alex.morgan@student.example', password: 'wrong' });
+
+  assert.equal(bad.status, 401);
+  assert.match(bad.body.error.message, /Invalid email or password/);
 });

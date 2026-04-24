@@ -1,8 +1,11 @@
 const express = require('express');
 const asyncHandler = require('../middleware/asyncHandler');
+const { requireSelfOrManager } = require('../middleware/auth');
 const applicantService = require('../services/applicantService');
 
 const router = express.Router();
+
+router.use('/:id', requireSelfOrManager('id'));
 
 router.get(
   '/:id',

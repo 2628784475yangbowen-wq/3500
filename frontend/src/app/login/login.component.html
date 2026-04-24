@@ -1,0 +1,58 @@
+<section class="mx-auto max-w-md rounded-3xl border border-ink/10 bg-paper/90 p-6 shadow-calm sm:p-8">
+  <header class="mb-5">
+    <p class="text-xs font-bold uppercase tracking-[0.34em] text-clay">Sign in</p>
+    <h2 class="title-font mt-2 text-2xl font-black">Campus Work-Study HR Portal</h2>
+    <p class="mt-2 text-sm text-ink/70">
+      Log in with your campus email. Applicants see the DAV portal; managers see the HR dashboard.
+    </p>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+    <label class="block">
+      <span class="mb-1 block text-sm font-bold text-ink">Email</span>
+      <input
+        type="email"
+        formControlName="email"
+        autocomplete="username"
+        class="w-full rounded-xl border border-ink/20 bg-white px-3 py-2 text-sm focus:border-tide focus:outline-none focus:ring-2 focus:ring-tide/30"
+      />
+    </label>
+
+    <label class="block">
+      <span class="mb-1 block text-sm font-bold text-ink">Password</span>
+      <input
+        type="password"
+        formControlName="password"
+        autocomplete="current-password"
+        class="w-full rounded-xl border border-ink/20 bg-white px-3 py-2 text-sm focus:border-tide focus:outline-none focus:ring-2 focus:ring-tide/30"
+      />
+    </label>
+
+    <p *ngIf="errorMessage" class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+      {{ errorMessage }}
+    </p>
+
+    <button
+      type="submit"
+      [disabled]="submitting"
+      class="btn-primary w-full focus-ring disabled:opacity-60"
+    >
+      {{ submitting ? 'Signing in…' : 'Sign in' }}
+    </button>
+  </form>
+
+  <div class="mt-6 rounded-2xl border border-ink/10 bg-white/70 p-4 text-sm">
+    <p class="mb-2 font-bold text-ink">Demo accounts (password: <code>password123</code>)</p>
+    <ul class="space-y-1">
+      <li *ngFor="let u of demoUsers">
+        <button
+          type="button"
+          (click)="fillDemo(u.email)"
+          class="text-left text-tide underline-offset-2 hover:underline"
+        >
+          {{ u.label }} — {{ u.email }}
+        </button>
+      </li>
+    </ul>
+  </div>
+</section>

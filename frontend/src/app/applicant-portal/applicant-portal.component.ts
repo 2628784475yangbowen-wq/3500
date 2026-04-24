@@ -6,6 +6,7 @@ import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } fr
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ApiService } from '../api.service';
+import { AuthService } from '../auth.service';
 import { AiChatComponent } from '../ai-chat/ai-chat.component';
 import { DAYS, dayLabel, friendlyError, parseSkills } from '../logic';
 import { Applicant, AvailabilityBlock, Job, JobApplication } from '../models';
@@ -35,7 +36,8 @@ type PortalValue = {
 export class ApplicantPortalComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
-  readonly applicantId = '30000000-0000-0000-0000-000000000001';
+  private readonly auth = inject(AuthService);
+  readonly applicantId = this.auth.currentUser()?.id ?? '';
   readonly days = DAYS;
 
   readonly portalForm = this.buildForm();

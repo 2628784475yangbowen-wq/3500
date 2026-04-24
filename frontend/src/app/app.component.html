@@ -10,16 +10,31 @@
             while the dashboard keeps department heads current without heavy graphics.
           </p>
         </div>
-        <div class="rounded-3xl border border-tide/20 bg-white/70 p-4 text-sm leading-6">
-          <p class="font-bold text-tide">Reliable Technology Slider: left-leaning</p>
-          <p class="text-ink/70">Fast forms, plain text, visible states, minimal bandwidth.</p>
+        <div class="flex flex-col items-end gap-3">
+          <div class="rounded-3xl border border-tide/20 bg-white/70 p-4 text-sm leading-6">
+            <p class="font-bold text-tide">Reliable Technology Slider: left-leaning</p>
+            <p class="text-ink/70">Fast forms, plain text, visible states, minimal bandwidth.</p>
+          </div>
+          <div *ngIf="isLoggedIn(); else loggedOutBadge" class="flex items-center gap-2 rounded-full border border-ink/10 bg-white/80 px-3 py-1 text-xs">
+            <span class="font-bold text-ink">{{ currentUser()?.firstName }} {{ currentUser()?.lastName }}</span>
+            <span class="text-ink/50">•</span>
+            <span class="uppercase tracking-widest text-clay">{{ currentUser()?.role }}</span>
+            <button type="button" (click)="logout()" class="ml-2 text-tide underline-offset-2 hover:underline">
+              Log out
+            </button>
+          </div>
+          <ng-template #loggedOutBadge>
+            <a routerLink="/login" class="rounded-full border border-ink/10 bg-white/80 px-3 py-1 text-xs font-bold text-tide hover:underline">
+              Sign in
+            </a>
+          </ng-template>
         </div>
       </div>
     </header>
 
-    <nav class="mb-5 flex flex-wrap gap-3">
+    <nav *ngIf="visibleTabs().length" class="mb-5 flex flex-wrap gap-3">
       <a
-        *ngFor="let tab of tabs"
+        *ngFor="let tab of visibleTabs()"
         class="tab-link focus-ring"
         routerLinkActive="tab-link-active"
         [routerLink]="tab.path"

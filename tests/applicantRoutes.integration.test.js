@@ -1,11 +1,11 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
+const { APPLICANT_ID, applicantAuth, managerAuth } = require('./helpers/auth');
 const request = require('supertest');
 const app = require('../backend/src/app');
 const applicantService = require('../backend/src/services/applicantService');
 
 test('GET /api/applicants/:id returns applicant details when service resolves', async (t) => {
-  process.env.API_TOKEN = '';
   const original = applicantService.getApplicantById;
 
   applicantService.getApplicantById = async (id) => ({
@@ -21,7 +21,9 @@ test('GET /api/applicants/:id returns applicant details when service resolves', 
     applicantService.getApplicantById = original;
   });
 
-  const response = await request(app).get('/api/applicants/30000000-0000-0000-0000-000000000001');
+  const response = await request(app)
+    .get(`/api/applicants/${APPLICANT_ID}`)
+    .set(applicantAuth(APPLICANT_ID));
 
   assert.equal(response.status, 200);
   assert.equal(response.body.applicant.first_name, 'Alex');
@@ -29,7 +31,6 @@ test('GET /api/applicants/:id returns applicant details when service resolves', 
 });
 
 test('PUT /api/applicants/:id/skills persists normalised skill list', async (t) => {
-  process.env.API_TOKEN = '';
   const original = applicantService.replaceSkills;
   let received;
 
@@ -50,7 +51,8 @@ test('PUT /api/applicants/:id/skills persists normalised skill list', async (t) 
   });
 
   const response = await request(app)
-    .put('/api/applicants/30000000-0000-0000-0000-000000000001/skills')
+    .put(`/api/applicants/${APPLICANT_ID}/skills`)
+    .set(applicantAuth(APPLICANT_ID))
     .send({ skills: ['customer service', 'data entry'] });
 
   assert.equal(response.status, 200);
@@ -60,7 +62,6 @@ test('PUT /api/applicants/:id/skills persists normalised skill list', async (t) 
 });
 
 test('PATCH /api/applicants/:id/profile forwards update payload', async (t) => {
-  process.env.API_TOKEN = '';
   const original = applicantService.updateProfile;
   let captured;
 
@@ -82,7 +83,8 @@ test('PATCH /api/applicants/:id/profile forwards update payload', async (t) => {
   });
 
   const response = await request(app)
-    .patch('/api/applicants/30000000-0000-0000-0000-000000000001/profile')
+    .patch(`/api/applicants/${APPLICANT_ID}/profile`)
+    .set(applicantAuth(APPLICANT_ID))
     .send({ firstName: 'Sam', maxWeeklyHours: 8 });
 
   assert.equal(response.status, 200);
@@ -92,10 +94,9 @@ test('PATCH /api/applicants/:id/profile forwards update payload', async (t) => {
 });
 
 test('GET /api/applicants/:id/applications returns application list', async (t) => {
-  process.env.API_TOKEN = '';
   const original = applicantService.listApplicationsByApplicant;
 
-  applicantService.listApplicationsByApplicant = async (id) => [
+  applicantService.listApplicationsByApplicant = async () => [
     { id: 'a1', jobId: 'b1', status: 'submitted', applicantNote: 'Interested' }
   ];
 
@@ -103,13 +104,14 @@ test('GET /api/applicants/:id/applications returns application list', async (t) 
     applicantService.listApplicationsByApplicant = original;
   });
 
-  const response = await request(app).get('/api/applicants/30000000-0000-0000-0000-000000000001/applications');
+  const response = await request(app)
+    .get(`/api/applicants/${APPLICANT_ID}/applications`)
+    .set(applicantAuth(APPLICANT_ID));
   assert.equal(response.status, 200);
   assert.equal(response.body.applications[0].status, 'submitted');
 });
 
 test('POST /api/applicants/:id/applications creates application', async (t) => {
-  process.env.API_TOKEN = '';
   const original = applicantService.applyToJob;
 
   applicantService.applyToJob = async (id, body) => ({
@@ -125,9 +127,42 @@ test('POST /api/applicants/:id/applications creates application', async (t) => {
 
   const jobId = '20000000-0000-0000-0000-000000000001';
   const response = await request(app)
-    .post('/api/applicants/30000000-0000-0000-0000-000000000001/applications')
+    .post(`/api/applicants/${APPLICANT_ID}/applications`)
+    .set(applicantAuth(APPLICANT_ID))
     .send({ jobId, applicantNote: 'Please consider me' });
 
   assert.equal(response.status, 200);
   assert.equal(response.body.application.status, 'submitted');
+});
+
+test('applicant cannot access another applicants record', async () => {
+  const otherId = '30000000-0000-0000-0000-000000000002';
+  const response = await request(app)
+    .get(`/api/applicants/${otherId}`)
+    .set(applicantAuth(APPLICANT_ID));
+
+  assert.equal(response.status, 403);
+  assert.match(response.body.error.message, /only access your own/i);
+});
+
+test('manager can read any applicant record', async (t) => {
+  const original = applicantService.getApplicantById;
+  applicantService.getApplicantById = async (id) => ({
+    id,
+    first_name: 'Nina',
+    last_name: 'Lopez',
+    email: 'nina.lopez@student.example',
+    skills: [],
+    availability: []
+  });
+  t.after(() => {
+    applicantService.getApplicantById = original;
+  });
+
+  const response = await request(app)
+    .get('/api/applicants/30000000-0000-0000-0000-000000000002')
+    .set(managerAuth());
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.applicant.first_name, 'Nina');
 });

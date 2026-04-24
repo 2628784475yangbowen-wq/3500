@@ -7,11 +7,11 @@ INSERT INTO departments (id, name, campus_location, description) VALUES
   ('10000000-0000-0000-0000-000000000004', 'Campus Recreation', 'Harwood Arena', 'Front desk operations, equipment checkout, and event support.')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO managers (id, department_id, first_name, last_name, email, role_title) VALUES
-  ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'Maya', 'Rivera', 'maya.rivera@kean.example', 'Library Operations Manager'),
-  ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', 'Sam', 'Patel', 'sam.patel@kean.example', 'IT Support Supervisor'),
-  ('20000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', 'Grace', 'Chen', 'grace.chen@kean.example', 'Student Success Coordinator'),
-  ('20000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000004', 'Jordan', 'Brooks', 'jordan.brooks@kean.example', 'Recreation Desk Lead')
+INSERT INTO managers (id, department_id, first_name, last_name, email, role_title, password_hash) VALUES
+  ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'Maya', 'Rivera', 'maya.rivera@kean.example', 'Library Operations Manager', crypt('password123', gen_salt('bf', 10))),
+  ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', 'Sam', 'Patel', 'sam.patel@kean.example', 'IT Support Supervisor', crypt('password123', gen_salt('bf', 10))),
+  ('20000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', 'Grace', 'Chen', 'grace.chen@kean.example', 'Student Success Coordinator', crypt('password123', gen_salt('bf', 10))),
+  ('20000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000004', 'Jordan', 'Brooks', 'jordan.brooks@kean.example', 'Recreation Desk Lead', crypt('password123', gen_salt('bf', 10)))
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO applicants (
@@ -26,7 +26,8 @@ INSERT INTO applicants (
   year_level,
   public_summary,
   access_needs,
-  max_weekly_hours
+  max_weekly_hours,
+  password_hash
 ) VALUES
   (
     '30000000-0000-0000-0000-000000000001',
@@ -40,7 +41,8 @@ INSERT INTO applicants (
     'junior',
     'Reliable with basic tech support, front desk, and peer mentoring experience.',
     'Prefers clear written instructions and lightweight pages that load on older hardware.',
-    12
+    12,
+    crypt('password123', gen_salt('bf', 10))
   ),
   (
     '30000000-0000-0000-0000-000000000002',
@@ -54,7 +56,8 @@ INSERT INTO applicants (
     'sophomore',
     'Friendly communicator with tutoring and scheduling experience.',
     'Needs predictable steps and visible save confirmations.',
-    10
+    10,
+    crypt('password123', gen_salt('bf', 10))
   ),
   (
     '30000000-0000-0000-0000-000000000003',
@@ -68,7 +71,8 @@ INSERT INTO applicants (
     'senior',
     'Experienced with troubleshooting, classroom technology, and ticket notes.',
     'Works best with text-first interfaces and low network usage.',
-    15
+    15,
+    crypt('password123', gen_salt('bf', 10))
   )
 ON CONFLICT (id) DO NOTHING;
 

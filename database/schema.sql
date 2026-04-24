@@ -28,6 +28,8 @@ CREATE TABLE managers (
   last_name TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
   role_title TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'manager' CHECK (role = 'manager'),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -48,6 +50,8 @@ CREATE TABLE applicants (
   access_needs TEXT NOT NULL DEFAULT '',
   max_weekly_hours INTEGER NOT NULL DEFAULT 12 CHECK (max_weekly_hours BETWEEN 1 AND 25),
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'applicant' CHECK (role = 'applicant'),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

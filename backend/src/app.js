@@ -1,8 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const requestLogger = require('./middleware/logger');
-const authenticate = require('./middleware/auth');
+const { requireAuth, requireRole } = require('./middleware/auth');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
+const authRoutes = require('./routes/auth');
 const applicantRoutes = require('./routes/applicants');
 const managerRoutes = require('./routes/managers');
 const aiRoutes = require('./routes/ai');
@@ -22,11 +23,12 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-app.use('/api', authenticate);
-app.use('/api/applicants', applicantRoutes);
-app.use('/api/managers', managerRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/jobs', jobRoutes);
+app.use('/api/auth', authRoutes);
+
+app.use('/api/jobs', requireAuth, jobRoutes);
+app.use('/api/ai', requireAuth, aiRoutes);
+app.use('/api/applicants', requireAuth, applicantRoutes);
+app.use('/api/managers', requireAuth, requireRole('manager'), managerRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
